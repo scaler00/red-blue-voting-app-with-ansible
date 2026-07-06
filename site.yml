@@ -1,0 +1,42 @@
+---
+# =============================================================
+# TechCorp Kubernetes Cluster — Main Playbook
+# Run: ansible-playbook site.yml --ask-vault-pass
+# =============================================================
+
+# -----------------------------------------------------------
+# Play 1 — All nodes: OS prep + containerd + K8s packages
+# -----------------------------------------------------------
+- name: Prepare Kubernetes Nodes
+  hosts: k8s_cluster
+  become: true
+  gather_facts: true
+  roles:
+    - role: common
+      tags: [common]
+
+# -----------------------------------------------------------
+# Play 2 — All nodes: Build the cluster
+#           master → kubeadm init, Calico, join command
+#           workers → kubeadm join
+# -----------------------------------------------------------
+- name: Build Kubernetes Cluster
+  hosts: k8s_cluster
+  become: true
+  gather_facts: true
+  roles:
+    - role: cluster
+      tags: [cluster]
+
+# -----------------------------------------------------------
+# Play 3 — Master only: Deploy Voting Application
+# -----------------------------------------------------------
+- name: Deploy Voting Application
+  hosts: k8s_master
+  become: true
+  gather_facts: true
+  vars_files:
+    - vault.yml
+  roles:
+    - role: application
+      tags: [application]

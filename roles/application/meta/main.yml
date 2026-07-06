@@ -1,0 +1,13 @@
+---
+galaxy_info:
+  role_name: application
+  author: TechCorp
+  description: Clone and deploy the Voting Application to Kubernetes
+  min_ansible_version: "2.14"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy
+        - noble
+
+dependencies: []

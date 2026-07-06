@@ -1,0 +1,16 @@
+---
+galaxy_info:
+  role_name: cluster
+  author: TechCorp
+  description: >
+    Initialise the Kubernetes control plane on the master, then join
+    all worker nodes — using when, register, set_fact, and hostvars.
+  min_ansible_version: "2.14"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy
+        - noble
+
+dependencies:
+  - role: common

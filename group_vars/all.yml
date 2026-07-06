@@ -1,0 +1,23 @@
+---
+# ============================================================
+# Global variables — shared by every host in the inventory
+# ============================================================
+
+# --- Container runtime ------------------------------------------
+containerd_version: "1.7.*"
+
+# --- Kubernetes version -----------------------------------------
+k8s_version: "1.29"
+k8s_package_version: "1.29.0-1.1"   # pinned; held by dpkg_selections
+
+# --- Cluster networking (Calico defaults) -----------------------
+pod_network_cidr: "192.168.0.0/16"
+service_cidr: "10.96.0.0/12"
+
+# --- Calico CNI -------------------------------------------------
+calico_manifest_url: "https://raw.githubusercontent.com/projectcalico/calico/v3.27.0/manifests/calico.yaml"
+
+# --- Voting Application -----------------------------------------
+app_namespace: "voting"
+app_repo_url: "https://github.com/dockersamples/example-voting-app.git"
+app_repo_dest: "/opt/voting-app"

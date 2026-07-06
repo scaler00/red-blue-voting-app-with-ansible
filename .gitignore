@@ -1,0 +1,30 @@
+# Ansible Vault — never commit unencrypted vault files
+# Encrypt first: ansible-vault encrypt vault.yml
+vault.yml
+
+# SSH keys
+*.pem
+*.key
+id_rsa
+id_rsa.pub
+id_ed25519
+
+# Ansible retry files
+*.retry
+
+# macOS metadata
+.DS_Store
+
+# Editor directories
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Temporary manifests rendered by Ansible
+/tmp/

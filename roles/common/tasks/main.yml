@@ -1,0 +1,157 @@
+---
+# ============================================================
+# Role: common
+# Runs on: ALL nodes (k8s_cluster)
+# Purpose:
+#   1. OS baseline — swap, kernel modules, sysctl
+#   2. Install container runtime (containerd)
+#   3. Install Kubernetes packages (kubeadm, kubelet, kubectl*)
+#      * kubectl is installed only on the master node
+# ============================================================
+
+# ---- 1. OS baseline -----------------------------------------
+
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Upgrade all packages
+  ansible.builtin.apt:
+    upgrade: dist
+
+- name: Install prerequisite packages
+  ansible.builtin.apt:
+    name: "{{ common_packages }}"
+    state: present
+
+- name: Disable swap (runtime)
+  ansible.builtin.command:
+    cmd: swapoff -a
+  changed_when: false
+
+- name: Disable swap permanently in /etc/fstab
+  ansible.builtin.replace:
+    path: /etc/fstab
+    regexp: '^([^#].*\sswap\s.*)$'
+    replace: '# \1'
+
+- name: Persist required kernel modules across reboots
+  ansible.builtin.copy:
+    dest: /etc/modules-load.d/k8s.conf
+    content: |
+      overlay
+      br_netfilter
+    mode: "0644"
+
+- name: Load kernel modules now
+  community.general.modprobe:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - overlay
+    - br_netfilter
+
+- name: Deploy Kubernetes sysctl settings
+  ansible.builtin.template:
+    src: sysctl-k8s.conf.j2
+    dest: /etc/sysctl.d/99-kubernetes.conf
+    mode: "0644"
+  notify: Reload sysctl
+
+- name: Apply sysctl parameters immediately
+  ansible.builtin.command:
+    cmd: sysctl --system
+  changed_when: false
+
+# ---- 2. Container runtime (containerd) ----------------------
+
+- name: Install containerd
+  ansible.builtin.apt:
+    name: "containerd={{ containerd_version }}"
+    state: present
+    update_cache: true
+
+- name: Create /etc/containerd directory
+  ansible.builtin.file:
+    path: /etc/containerd
+    state: directory
+    mode: "0755"
+
+- name: Generate default containerd config
+  ansible.builtin.shell:
+    cmd: containerd config default > /etc/containerd/config.toml
+  args:
+    creates: /etc/containerd/config.toml
+
+- name: Enable SystemdCgroup in containerd config
+  ansible.builtin.replace:
+    path: /etc/containerd/config.toml
+    regexp: 'SystemdCgroup = false'
+    replace: 'SystemdCgroup = true'
+  notify: Restart containerd
+
+- name: Enable and start containerd
+  ansible.builtin.service:
+    name: containerd
+    state: started
+    enabled: true
+
+# ---- 3. Kubernetes packages ---------------------------------
+
+- name: Create /etc/apt/keyrings directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+
+- name: Download Kubernetes apt signing key
+  ansible.builtin.get_url:
+    url: "https://pkgs.k8s.io/core:/stable:/v{{ k8s_version }}/deb/Release.key"
+    dest: /tmp/kubernetes-release.key
+    mode: "0644"
+
+- name: De-armor and install Kubernetes GPG key
+  ansible.builtin.shell:
+    cmd: >
+      gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+      /tmp/kubernetes-release.key
+  args:
+    creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+- name: Add Kubernetes apt repository
+  ansible.builtin.apt_repository:
+    repo: >-
+      deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg]
+      https://pkgs.k8s.io/core:/stable:/v{{ k8s_version }}/deb/ /
+    filename: kubernetes
+    state: present
+    update_cache: true
+
+- name: Install kubeadm and kubelet on all nodes
+  ansible.builtin.apt:
+    name:
+      - "kubelet={{ k8s_package_version }}"
+      - "kubeadm={{ k8s_package_version }}"
+    state: present
+
+- name: Install kubectl on master node only
+  ansible.builtin.apt:
+    name: "kubectl={{ k8s_package_version }}"
+    state: present
+  when: inventory_hostname in groups['k8s_master']
+
+- name: Hold Kubernetes packages at current version
+  ansible.builtin.dpkg_selections:
+    name: "{{ item }}"
+    selection: hold
+  loop:
+    - kubelet
+    - kubeadm
+    - kubectl
+
+- name: Enable and start kubelet
+  ansible.builtin.service:
+    name: kubelet
+    state: started
+    enabled: true

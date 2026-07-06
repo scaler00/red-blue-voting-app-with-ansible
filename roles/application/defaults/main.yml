@@ -1,0 +1,4 @@
+---
+app_namespace: "voting"
+app_repo_url: "https://github.com/dockersamples/example-voting-app.git"
+app_repo_dest: "/opt/voting-app"

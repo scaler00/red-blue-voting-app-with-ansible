@@ -1,0 +1,19 @@
+---
+# OS prerequisites
+common_packages:
+  - apt-transport-https
+  - ca-certificates
+  - curl
+  - gnupg
+  - lsb-release
+  - software-properties-common
+  - git
+  - vim
+  - net-tools
+
+# Container runtime
+containerd_version: "1.7.*"
+
+# Kubernetes packages
+k8s_version: "1.29"
+k8s_package_version: "1.29.0-1.1"

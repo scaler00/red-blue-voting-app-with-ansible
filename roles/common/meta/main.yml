@@ -1,0 +1,15 @@
+---
+galaxy_info:
+  role_name: common
+  author: TechCorp
+  description: >
+    OS baseline, containerd runtime, and Kubernetes package installation
+    for every node in the cluster.
+  min_ansible_version: "2.14"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy
+        - noble
+
+dependencies: []
