@@ -5,6 +5,10 @@ app_repo_dest: "/opt/voting-app"
 app_repo_branch: "main"
 app_k8s_specs_dir: "k8s-specifications"
 
+# Voting options shown on the ballot page
+vote_option_a: "Red"
+vote_option_b: "Blue"
+
 # Must match kube_user / kubeconfig_path from the cluster role
 kube_user: "ubuntu"
 kubeconfig_path: "/home/{{ kube_user }}/.kube/config"

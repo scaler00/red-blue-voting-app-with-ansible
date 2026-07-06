@@ -118,7 +118,7 @@
   register: nodes_output
   retries: 12
   delay: 15
-  until: nodes_output.stdout.count('Ready') >= groups['k8s_cluster'] | length
+  until: nodes_output.stdout.count(' Ready ') >= groups['k8s_cluster'] | length
   when: inventory_hostname in groups['k8s_master']
   changed_when: false
 
